@@ -24,4 +24,3 @@ email-validator==2.1.0
 faster-whisper==1.0.3
 ffmpeg-python==0.2.0
 faiss-cpu>=1.7.4
-langchain>=0.1.0
