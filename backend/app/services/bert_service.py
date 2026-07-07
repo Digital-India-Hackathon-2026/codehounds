@@ -24,18 +24,13 @@ class BertService:
             with open(settings.LABEL_ENCODER_PATH, "rb") as f:
                 self.label_encoder = pickle.load(f)
 
-            logger.info("Initializing MiniLM INT8 model structure...")
-            config = AutoConfig.from_pretrained(settings.BERT_MODEL_DIR)
-            model_unquantized = AutoModelForSequenceClassification.from_config(config)
+            logger.info(f"Loading MiniLM model from {settings.BERT_MODEL_DIR}...")
+            model_unquantized = AutoModelForSequenceClassification.from_pretrained(settings.BERT_MODEL_DIR)
             
             # Dynamic quantization matching original PyTorch format
             self.model = torch.quantization.quantize_dynamic(
                 model_unquantized, {torch.nn.Linear}, dtype=torch.qint8
             )
-            
-            logger.info(f"Loading state dict from {settings.BERT_MODEL_PATH}")
-            state_dict = torch.load(settings.BERT_MODEL_PATH, map_location=self.device)
-            self.model.load_state_dict(state_dict, strict=False)
             
             self.model.to(self.device)
             self.model.eval()

@@ -22,3 +22,8 @@ frontend/build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Models & Scratch
+backend/app/models/minilm/model.safetensors
+backend/app/models/minilm/training_args.bin
+backend/scratch/
