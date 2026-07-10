@@ -93,8 +93,7 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
           refreshSubscribers = [];
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
-          window.location.href = '/login';
-          throw new Error('Session expired. Please login again.');
+          throw new Error('Session expired.');
         }
       } else {
         // Queue request while refresh is in progress
@@ -121,8 +120,7 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     } else {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      window.location.href = '/login';
-      throw new Error('Session expired. Please login again.');
+      throw new Error('Session expired.');
     }
   }
 

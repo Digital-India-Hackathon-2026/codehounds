@@ -122,7 +122,7 @@ export default function Settings() {
       alert("All other sessions revoked successfully. Please re-login.");
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      window.location.href = '/login';
+      window.location.href = '/';
     } catch (err: any) {
       alert("Failed to invalidate sessions: " + err.message);
     }
@@ -134,7 +134,7 @@ export default function Settings() {
       await fetchAPI('/settings/delete-account', { method: 'DELETE' });
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      window.location.href = '/login';
+      window.location.href = '/';
     } catch (err: any) {
       alert("Failed to delete account: " + err.message);
     }

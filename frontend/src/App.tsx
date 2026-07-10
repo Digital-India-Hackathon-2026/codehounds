@@ -63,41 +63,25 @@ import AudioAnalysis from './pages/AudioAnalysis';
 import TextAnalysis from './pages/TextAnalysis';
 import NetworkGraph from './pages/NetworkGraph';
 import Settings from './pages/Settings';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Authenticated Layout */}
-          <Route path="*" element={
-            <ProtectedRoute>
-              <div className="flex min-h-screen bg-background">
-                <Sidebar />
-                <main className="flex-1 ml-64 p-8">
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/monitor" element={<LiveMonitor />} />
-                    <Route path="/audio" element={<AudioAnalysis />} />
-                    <Route path="/text" element={<TextAnalysis />} />
-                    <Route path="/network" element={<NetworkGraph />} />
-                    <Route path="/settings" element={<Settings />} />
-                    {/* Placeholder routes for others */}
-                    <Route path="*" element={<div className="p-12 text-secondary flex items-center justify-center h-full glass-panel"><p>Module coming soon.</p></div>} />
-                  </Routes>
-                </main>
-              </div>
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </AuthProvider>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <main className="flex-1 ml-64 p-8">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/monitor" element={<LiveMonitor />} />
+            <Route path="/audio" element={<AudioAnalysis />} />
+            <Route path="/text" element={<TextAnalysis />} />
+            <Route path="/network" element={<NetworkGraph />} />
+            <Route path="/settings" element={<Settings />} />
+            {/* Placeholder routes for others */}
+            <Route path="*" element={<div className="p-12 text-secondary flex items-center justify-center h-full glass-panel"><p>Module coming soon.</p></div>} />
+          </Routes>
+        </main>
+      </div>
     </Router>
   );
 }
