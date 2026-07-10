@@ -66,10 +66,12 @@ async def lifespan(app: FastAPI):
         # Load BERT Models
         bert_service.load_model()
         app.state.bert_service = bert_service
+        app.state.classifier_loaded = True
         
         # Load Whisper Model
         whisper_service.load_model()
         app.state.whisper_service = whisper_service
+        app.state.asr_loaded = True
         
         # Load RAG Engine (index.pkl, pipeline.py, ChromaDB)
         rag_service.initialize()
@@ -91,3 +93,5 @@ async def lifespan(app: FastAPI):
     app.state.whisper_service = None
     app.state.rag_service = None
     app.state.lstm_service = None
+    app.state.classifier_loaded = False
+    app.state.asr_loaded = False

@@ -37,13 +37,16 @@ class ReportRepository:
             for ind in indicators
         ]
         
+        from app.core.config import settings
+        
         db_report = Report(
             transcript=text_content,
             risk_score=risk_score,
             risk_level=risk_level,
             scam_type=scam_type,
             confidence=confidence,
-            indicators=indicator_models
+            indicators=indicator_models,
+            is_demo_session=settings.DEMO_MODE
         )
         db.add(db_report)
         db.flush()

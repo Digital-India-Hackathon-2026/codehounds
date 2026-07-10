@@ -44,10 +44,25 @@ class WhisperService:
             logger.error(f"Failed to load Whisper model: {e}")
             self.is_loaded = False
 
-    def _save_temp_audio(self, audio_data: bytes, extension: str = ".wav") -> str:
+    def _save_temp_audio(self, audio_data: bytes, extension: str = None) -> str:
         """
         Saves binary audio data to a temporary file for whisper decoding.
+        Auto-detects format from magic bytes so ffmpeg receives the correct
+        container hint (WebM from browser, WAV from file uploads, etc.).
         """
+        if extension is None:
+            # Detect format from magic bytes
+            if audio_data[:4] == b'RIFF' and audio_data[8:12] == b'WAVE':
+                extension = ".wav"
+            elif audio_data[:4] == b'\x1a\x45\xdf\xa3':
+                extension = ".webm"
+            elif audio_data[:3] == b'ID3' or audio_data[:2] == b'\xff\xfb':
+                extension = ".mp3"
+            elif audio_data[:4] == b'OggS':
+                extension = ".ogg"
+            else:
+                extension = ".webm"  # safe default for browser chunks
+
         fd, temp_path = tempfile.mkstemp(suffix=extension)
         with os.fdopen(fd, 'wb') as f:
             f.write(audio_data)

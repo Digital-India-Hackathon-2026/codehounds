@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     PROJECT_NAME: str = "ASTRA"
     API_V1_STR: str = "/api/v1"
+    DEMO_MODE: bool = False
     
     # Database
     DATABASE_URL: str = "sqlite:///./astra.db"

@@ -55,11 +55,13 @@ async def process_threat_intel_background(
             )
             
             # Log threat events
+            from app.core.config import settings
             for ind in indicators:
                 event = ThreatEvent(
                     report_id=report_id,
                     event_type=f"{ind['type']} Detected",
-                    description=ind['description']
+                    description=ind['description'],
+                    is_demo_session=settings.DEMO_MODE
                 )
                 db.add(event)
                 

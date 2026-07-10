@@ -60,8 +60,14 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
+    # Initialize model-loaded state flags (set to True during lifespan startup)
+    app.state.classifier_loaded = False
+    app.state.asr_loaded = False
+    
     import sys
+    import time
     app.state.limiter = limiter
+    app.state.start_time = time.time()
     limiter.enabled = not any("pytest" in x or "test" in x for x in sys.argv)
     app.add_exception_handler(RateLimitExceeded, lambda req, exc: Response(content="Rate limit exceeded", status_code=429))
     app.add_middleware(SlowAPIMiddleware)
@@ -86,12 +92,17 @@ def create_app() -> FastAPI:
             
         return response
 
-    # CORS middleware
+    # CORS middleware — registered after SlowAPI so preflight OPTIONS requests
+    # are handled by CORS before the rate limiter can reject them.
+    # Uses allow_origin_regex for dev flexibility (any localhost port),
+    # plus explicit production origins.
+    production_origins = [settings.FRONTEND_URL] if settings.FRONTEND_URL else []
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"],
+        allow_origins=production_origins,
+        allow_origin_regex=r"http://localhost:\d+",
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
         allow_headers=["*"],
     )
 
@@ -106,38 +117,6 @@ def create_app() -> FastAPI:
         if not str(request.url).startswith("http://localhost") and not str(request.url).startswith("http://127.0.0.1") and "https" in str(request.url):
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
-
-    @app.get("/health", tags=["Health"])
-    def health_check(request: Request):
-        try:
-            whisper_loaded = request.app.state.whisper_service.is_loaded
-        except:
-            whisper_loaded = False
-            
-        try:
-            bert_loaded = request.app.state.bert_service.model is not None
-        except:
-            bert_loaded = False
-            
-        return {
-            "status": "healthy",
-            "api": True,
-            "bert": bert_loaded,
-            "whisper": whisper_loaded
-        }
-        
-    @app.get("/ready", tags=["Health"])
-    def readiness_check(request: Request, db: Session = Depends(get_db)):
-        try:
-            db.execute("SELECT 1")
-            db_status = True
-        except:
-            db_status = False
-            
-        return {
-            "status": "ready" if db_status else "not_ready",
-            "database": db_status
-        }
 
     # Include routers
     app.include_router(analyze.router, prefix=settings.API_V1_STR, tags=["Analysis"])
@@ -154,6 +133,10 @@ def create_app() -> FastAPI:
     app.include_router(live_monitor.router, tags=["Live Monitor WebSockets"])
     from app.api import auth
     app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
+
+    # Health check endpoint — no auth, no rate limiting
+    from app.api.health import router as health_router
+    app.include_router(health_router, prefix=settings.API_V1_STR, tags=["Health"])
 
     @app.get("/")
     def read_root():

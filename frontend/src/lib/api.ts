@@ -1,6 +1,8 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// In local dev, Vite proxies /api → http://localhost:8000 and /ws → ws://localhost:8000
+// so all requests are same-origin. Set VITE_API_URL / VITE_WS_URL for production.
+const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
-export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/live-monitor';
+export const WS_URL = import.meta.env.VITE_WS_URL || '/ws/live-monitor';
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];

@@ -3,7 +3,7 @@ services:
     name: astra-backend
     env: python
     rootDir: backend
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && mkdir -p bin && curl -L https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz | tar -xJ --strip-components=1 -C bin/ ffmpeg-git-amd64-static/ffmpeg ffmpeg-git-amd64-static/ffprobe
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION

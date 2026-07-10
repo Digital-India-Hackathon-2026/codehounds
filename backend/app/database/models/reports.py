@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Integer, ForeignKey
+from sqlalchemy import Column, String, Float, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database.models.base import Base, BaseMixin
 
@@ -18,6 +18,7 @@ class Report(Base, BaseMixin):
     risk_level = Column(String)
     
     explanation = Column(String, nullable=True)
+    is_demo_session = Column(Boolean, default=False, nullable=False)
 
     analyst = relationship("User", back_populates="reports")
     indicators = relationship("Indicator", back_populates="report", cascade="all, delete-orphan")

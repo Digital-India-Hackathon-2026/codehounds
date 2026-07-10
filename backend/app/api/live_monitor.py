@@ -34,20 +34,25 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     Expects binary audio chunks, processes them through the intelligence pipeline,
     and returns a JSON payload with transcript, score, and indicators.
     """
-    if not token:
-        await websocket.close(code=1008)
-        return
-        
-    try:
-        # Validate JWT Token
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        username: str = payload.get("sub")
-        if not username:
+    authenticated = False
+    username = None
+
+    if token:
+        try:
+            # Validate JWT Token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            username = payload.get("sub")
+            if username:
+                authenticated = True
+        except JWTError:
+            pass
+
+    if not authenticated:
+        if settings.DEMO_MODE:
+            username = "demo_user"
+        else:
             await websocket.close(code=1008)
             return
-    except JWTError:
-        await websocket.close(code=1008)
-        return
         
     await manager.connect(websocket)
     try:

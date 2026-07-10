@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MediaRecorder Cycle Gap Analyzer</title>
+</head>
+<body style="font-family: monospace; background: #0f0f11; color: #a9b1d6; padding: 2rem;">
+    <h2>MediaRecorder Transition Gap Analyzer</h2>
+    <p>This utility measures the exact delay in milliseconds between stopping one recording cycle and starting the next.</p>
+    <button id="startBtn" style="padding: 10px 20px; font-weight: bold; cursor: pointer;">Grant Mic & Start Test</button>
+    <button id="stopBtn" style="padding: 10px 20px; display: none; cursor: pointer;">Stop Test</button>
+    
+    <div id="output" style="margin-top: 20px; white-space: pre-wrap; line-height: 1.5; border: 1px solid #333; padding: 15px; background: #16161e;"></div>
+
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const output = document.getElementById('output');
+
+        let stream = null;
+        let mediaRecorder = null;
+        let intervalId = null;
+        let cycleCount = 0;
+
+        startBtn.onclick = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                log("Microphone access granted. Starting 4-second cycle loop...");
+                runCycle();
+            } catch (err) {
+                log("Permission denied or error: " + err.message);
+            }
+        };
+
+        stopBtn.onclick = () => {
+            if (intervalId) clearInterval(intervalId);
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+            }
+            stopBtn.style.display = 'none';
+            log("Test stopped.");
+        };
+
+        function log(msg) {
+            output.textContent += "[" + new Date().toLocaleTimeString() + "] " + msg + "\n";
+        }
+
+        function runCycle() {
+            cycleCount++;
+            
+            const startCallTime = performance.now();
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            
+            let chunks = [];
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const stopDoneTime = performance.now();
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                
+                // Read duration from blob if possible, or measure encoder delay
+                const fileReader = new FileReader();
+                fileReader.onload = () => {
+                    log(`Cycle #${cycleCount} stopped. Data size: ${blob.size} bytes. Transition latency: ${(stopDoneTime - startCallTime - 4000).toFixed(2)} ms`);
+                };
+                fileReader.readAsArrayBuffer(blob);
+            };
+
+            mediaRecorder.start();
+            log(`Cycle #${cycleCount} started.`);
+
+            intervalId = setTimeout(() => {
+                const stopCallTime = performance.now();
+                mediaRecorder.stop();
+                
+                // Immediately start next cycle to measure overhead
+                setTimeout(() => {
+                    if (stopBtn.style.display !== 'none') {
+                        runCycle();
+                    }
+                }, 0);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

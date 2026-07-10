@@ -2,7 +2,7 @@ import logging
 import uuid
 from sqlalchemy.orm import Session
 from app.repositories.campaign_repository import CampaignRepository
-from app.services.llm_service import llm_service
+from app.services.gemini_service import gemini_service
 from app.services.rag_service import rag_service
 
 logger = logging.getLogger(__name__)
@@ -47,10 +47,12 @@ class CampaignService:
         Uses LLM to generate a snappy threat actor name, falling back to a generic UUID format.
         """
         try:
-            if llm_service.client:
-                prompt = f"Given this scam transcript, generate a 2 or 3 word threat intelligence campaign name (e.g., 'Operation FakeBank', 'Phantom Caller'). Transcript: {transcript[:200]}"
-                response = await llm_service.client.chat.completions.create(
-                    model=llm_service.model,
+            if gemini_service.client:
+                from app.services.pii_scrubber import scrub_pii
+                scrubbed_transcript = scrub_pii(transcript[:200])
+                prompt = f"Given this scam transcript, generate a 2 or 3 word threat intelligence campaign name (e.g., 'Operation FakeBank', 'Phantom Caller'). Transcript: {scrubbed_transcript}"
+                response = await gemini_service.client.chat.completions.create(
+                    model=gemini_service.model,
                     messages=[
                         {"role": "system", "content": "You are a threat intelligence naming generator. Output ONLY the campaign name, no quotes."},
                         {"role": "user", "content": prompt}

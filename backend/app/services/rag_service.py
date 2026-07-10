@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -84,6 +84,17 @@ class RagService:
         except Exception as e:
             logger.error(f"RAG Metadata Retrieval failed for query '{query}': {e}")
             return []
+
+    def retrieve_similar_scams(self, query: str) -> Tuple[Optional[str], float, Optional[str]]:
+        """
+        Retrieves the top campaign match for a given query text.
+        Returns: (campaign_name, similarity_score, category)
+        """
+        results = self.retrieve_with_metadata(query, top_k=1)
+        if results:
+            best = results[0]
+            return best.get("campaign"), best.get("similarity", 0.0), best.get("category")
+        return None, 0.0, None
 
     def score_risk(self, query: str) -> Tuple[float, str, str]:
         """

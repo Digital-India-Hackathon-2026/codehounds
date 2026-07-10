@@ -91,6 +91,12 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Se
     If a valid token is provided, returns that user.
     Otherwise, falls back to the default user.
     """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     if token:
         try:
             payload = jwt.decode(
@@ -106,17 +112,21 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Se
                 if user:
                     return user
         except Exception:
-            pass
+            if not settings.DEMO_MODE:
+                raise credentials_exception
 
-    user = db.query(User).first()
-    if not user:
-        user = User(
-            username="default_user",
-            email="default@sentinelx.net",
-            password_hash=get_password_hash("Password123!"),
-            role="admin"
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    return user
+    if settings.DEMO_MODE:
+        user = db.query(User).filter(User.username == "demo_user").first()
+        if not user:
+            user = User(
+                username="demo_user",
+                email="demo@sentinelx.net",
+                password_hash=get_password_hash("DemoPassword123!"),
+                role="analyst"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+
+    raise credentials_exception
