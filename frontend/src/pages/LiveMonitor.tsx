@@ -256,7 +256,7 @@ export default function LiveMonitor() {
             </div>
             
             <button
-              onClick={toggleRecording}
+              onClick={toggleMonitoring}
               className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold font-mono tracking-wider transition-all border ${
                 isRecording
                   ? 'bg-transparent border-white/20 text-white hover:bg-white/5 hover:border-white'
