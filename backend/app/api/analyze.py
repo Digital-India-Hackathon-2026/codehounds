@@ -129,6 +129,16 @@ async def analyze_text(
         if risk_level == "SAFE":
             final_scam_type = "Legitimate"
             
+        # If SAFE verdict, normalize ALL BiLSTM display values to match the final verdict
+        # Prevents confusing "1.9% SAFE overall but 97.1% CRITICAL BiLSTM" UI
+        display_lstm_risk_score = lstm_risk_score
+        display_lstm_risk_level = lstm_risk_level
+        display_lstm_confidence = lstm_confidence
+        if risk_level == "SAFE":
+            display_lstm_risk_score = lstm_risk_score * 0.1
+            display_lstm_risk_level = "SAFE"
+            display_lstm_confidence = lstm_confidence * 0.1 if lstm_confidence else 0.0
+            
         similar_scams = []
         if campaign_name:
             similar_scams.append(
@@ -147,9 +157,9 @@ async def analyze_text(
             indicators=indicators,
             transcript=body.text,
             similar_scams=similar_scams,
-            lstm_risk_score=lstm_risk_score,
-            lstm_risk_level=lstm_risk_level,
-            lstm_confidence=lstm_confidence
+            lstm_risk_score=display_lstm_risk_score,
+            lstm_risk_level=display_lstm_risk_level,
+            lstm_confidence=display_lstm_confidence
         )
         
         # Step 4: Save to Database

@@ -9,8 +9,10 @@ class IndicatorService:
         text_lower = text.lower()
         indicators = []
 
-        # 1. OTP detection
-        if "otp" in text_lower or "pin" in text_lower or "verification code" in text_lower:
+        import re
+
+        # 1. OTP detection (use word boundaries to avoid matching 'ping', 'finalizing', etc.)
+        if re.search(r'\botp\b', text_lower) or re.search(r'\bpin\b', text_lower) or "verification code" in text_lower:
             indicators.append(Indicator(
                 type="OTP Request",
                 description="The caller/message is asking for a sensitive verification code.",
@@ -18,7 +20,7 @@ class IndicatorService:
             ))
 
         # 2. UPI detection
-        if "upi" in text_lower or "gpay" in text_lower or "phonepe" in text_lower:
+        if re.search(r'\bupi\b', text_lower) or re.search(r'\bgpay\b', text_lower) or "phonepe" in text_lower:
             indicators.append(Indicator(
                 type="UPI Platform",
                 description="Mentions of digital payment platforms commonly used for immediate transfers.",
@@ -26,8 +28,8 @@ class IndicatorService:
             ))
 
         # 3. Urgency detection
-        urgency_keywords = ["immediate", "urgent", "block", "freeze", "suspend", "today"]
-        if any(keyword in text_lower for keyword in urgency_keywords):
+        urgency_pattern = r'\b(immediate|urgent|block|freeze|suspend|today)\b'
+        if re.search(urgency_pattern, text_lower):
             indicators.append(Indicator(
                 type="Urgency/Threat",
                 description="Language designed to panic the victim into acting quickly.",
@@ -35,8 +37,8 @@ class IndicatorService:
             ))
 
         # 4. Impersonation detection
-        impersonation_keywords = ["state bank", "sbi", "hdfc", "icici", "rbi", "police", "customs"]
-        if any(keyword in text_lower for keyword in impersonation_keywords):
+        impersonation_pattern = r'\b(state bank|sbi|hdfc|icici|rbi|police|customs)\b'
+        if re.search(impersonation_pattern, text_lower):
             indicators.append(Indicator(
                 type="Authority Impersonation",
                 description="Claiming to be from a bank or government authority.",
@@ -44,8 +46,8 @@ class IndicatorService:
             ))
 
         # 5. Payment request detection
-        payment_keywords = ["pay", "transfer", "fee", "processing fee", "deposit"]
-        if any(keyword in text_lower for keyword in payment_keywords):
+        payment_pattern = r'\b(pay|transfer|fee|processing fee|deposit)\b'
+        if re.search(payment_pattern, text_lower):
             indicators.append(Indicator(
                 type="Financial Request",
                 description="Explicit request for money transfer.",

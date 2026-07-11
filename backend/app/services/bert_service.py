@@ -84,6 +84,11 @@ class BertService:
                 # If legitimate, we return a low confidence of being a scam so it doesn't trigger the risk engine
                 return scam_type, 0.0
             
+            # If the classification is extremely borderline (confidence < 0.65), override it to Legitimate
+            if scam_type.lower() == "fraud" and confidence < 0.65:
+                scam_type = "Legitimate"
+                return scam_type, 0.0
+            
             return scam_type, float(confidence)
             
         except Exception as e:

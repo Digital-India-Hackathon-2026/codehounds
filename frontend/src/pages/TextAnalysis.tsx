@@ -146,7 +146,8 @@ export default function TextAnalysis() {
         indicators: response.indicators,
         similarScams: response.similar_scams,
         lstmRiskScore: response.lstm_risk_score !== undefined ? response.lstm_risk_score : null,
-        lstmRiskLevel: response.lstm_risk_level || 'UNKNOWN'
+        lstmRiskLevel: response.lstm_risk_level || 'UNKNOWN',
+        lstmConfidence: response.lstm_confidence !== undefined ? response.lstm_confidence : null
       });
       setText('');
     } catch (err: any) {
@@ -290,16 +291,30 @@ export default function TextAnalysis() {
                         {result.lstmRiskScore !== null ? `${(result.lstmRiskScore * 100).toFixed(1)}%` : 'N/A'}
                       </p>
                     </div>
-                    <div className="mt-4">
-                      <div className="flex justify-between text-xs font-mono text-secondary mb-1.5">
-                        <span>Level: {result.lstmRiskLevel}</span>
-                        <span>{result.lstmRiskScore !== null ? `${(result.lstmRiskScore * 100).toFixed(0)}%` : 'N/A'}</span>
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <div className="flex justify-between text-xs font-mono text-secondary mb-1.5">
+                          <span>Risk Level</span>
+                          <span>{result.lstmRiskLevel}</span>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">
+                          <div 
+                            className="bg-error h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${result.lstmRiskScore !== null ? result.lstmRiskScore * 100 : 0}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">
-                        <div 
-                          className="bg-error h-full rounded-full transition-all duration-1000"
-                          style={{ width: `${result.lstmRiskScore !== null ? result.lstmRiskScore * 100 : 0}%` }}
-                        />
+                      <div>
+                        <div className="flex justify-between text-xs font-mono text-secondary mb-1.5">
+                          <span>Confidence</span>
+                          <span>{result.lstmConfidence !== null ? `${(result.lstmConfidence * 100).toFixed(1)}%` : 'N/A'}</span>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">
+                          <div 
+                            className="bg-white h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${result.lstmConfidence !== null ? result.lstmConfidence * 100 : 0}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

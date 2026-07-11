@@ -37,6 +37,11 @@ class RiskEngine:
         # Normalize score
         score = min(max(score, 0.0), 1.0)
         
+        # Safeguard: if there are no threat indicators and no historical similarity, it's highly likely safe
+        # Dampen the score heavily to prevent false positives from ML model noise
+        if len(indicators) == 0 and similar_scam_score < 0.35:
+            score = score * 0.1
+
         # Determine Level
         if score < 0.3:
             level = "SAFE"
