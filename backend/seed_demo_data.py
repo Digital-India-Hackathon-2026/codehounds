@@ -13,6 +13,15 @@ def generate_seed_data():
     db = SessionLocal()
     
     print("Seeding database for Dashboard UI...")
+    
+    # Clean old demo data to avoid unique constraints violations
+    print("Clearing existing threat intelligence demo data...")
+    db.query(Alert).delete()
+    db.query(NetworkEdge).delete()
+    db.query(NetworkNode).delete()
+    db.query(Campaign).delete()
+    db.query(Report).delete()
+    db.commit()
 
     # 0. Default admin user
     if not db.query(User).filter(User.username == "admin").first():
@@ -30,7 +39,7 @@ def generate_seed_data():
 
     # 1. Campaigns (10)
     campaigns = []
-    scam_types = ["Bank Impersonation", "Job Scam", "Lottery Scam", "Tech Support Fraud", "Romance Scam"]
+    scam_types = ["Bank Impersonation", "Job Scam", "Lottery Scam", "Tech Support Fraud"]
     for i in range(10):
         c = Campaign(
             campaign_name=f"Operation_Storm_{i}",

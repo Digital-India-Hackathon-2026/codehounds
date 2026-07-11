@@ -198,6 +198,30 @@ async def analyze_audio(
             transcript = await whisper_service.transcribe(audio_data)
             language = await whisper_service.detect_language(audio_data)
             
+            # Non-speech / music detection guard
+            import re
+            cleaned_transcript = transcript.strip()
+            non_speech_pattern = re.compile(
+                r'^(\[music\]|\(music\)|\(applause\)|\(laughter\)|\(silence\)|\(sigh\)|\(sighs\)|\[applause\]|\[laughter\]|\[silence\]|\[gasp\]|\s)*$', 
+                re.IGNORECASE
+            )
+            
+            if not cleaned_transcript or non_speech_pattern.match(cleaned_transcript):
+                logger.info("Non-speech, silence or music audio detected. Returning SAFE/Legitimate classification.")
+                return AnalyzeResponse(
+                    risk_score=0.0,
+                    risk_level="SAFE",
+                    scam_type="Legitimate",
+                    confidence=1.0,
+                    indicators=[],
+                    transcript=transcript if transcript else "[No Speech Detected]",
+                    similar_scams=[],
+                    lstm_risk_score=0.0,
+                    lstm_risk_level="SAFE",
+                    lstm_confidence=1.0,
+                    explanation="The audio consists of music, silence, or non-speech sounds. No vocal threat indicators were detected."
+                )
+            
             # Step 2: BERT Classification
             scam_type, confidence = await bert_service.classify(transcript)
             

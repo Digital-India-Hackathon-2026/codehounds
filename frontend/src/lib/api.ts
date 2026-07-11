@@ -35,6 +35,9 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
   }
 
   if (options.body instanceof FormData) {
+    if (defaultOptions.headers) {
+      delete (defaultOptions.headers as Record<string, string>)['Content-Type'];
+    }
     const headers = new Headers(options.headers || {});
     headers.delete('Content-Type');
     
