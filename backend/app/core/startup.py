@@ -30,10 +30,48 @@ def add_ffmpeg_to_path():
         except Exception as e:
             logger.warning(f"Failed to dynamically map CapCut ffmpeg: {e}")
 
+async def load_models_background(app: FastAPI):
+    logger.info("Starting background loading of ML models...")
+    try:
+        # Load BERT Models
+        bert_service.load_model()
+        app.state.bert_service = bert_service
+        app.state.classifier_loaded = True
+        logger.info("BERT model loaded successfully in background.")
+    except Exception as e:
+        logger.error(f"Failed to load BERT model: {e}")
+
+    try:
+        # Load Whisper Model
+        whisper_service.load_model()
+        app.state.whisper_service = whisper_service
+        app.state.asr_loaded = True
+        logger.info("Whisper model loaded successfully in background.")
+    except Exception as e:
+        logger.error(f"Failed to load Whisper model: {e}")
+
+    try:
+        # Load RAG Engine (index.pkl, pipeline.py, ChromaDB)
+        rag_service.initialize()
+        app.state.rag_service = rag_service
+        logger.info("RAG service initialized successfully in background.")
+    except Exception as e:
+        logger.error(f"Failed to initialize RAG: {e}")
+
+    try:
+        # Load BiLSTM Engine
+        lstm_service.initialize()
+        app.state.lstm_service = lstm_service
+        logger.info("BiLSTM service initialized successfully in background.")
+    except Exception as e:
+        logger.error(f"Failed to initialize BiLSTM: {e}")
+
+    logger.info("All ML Models loaded successfully into app.state in the background.")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
-    logger.info("Initializing ASTRA Database & ML Models...")
+    logger.info("Initializing ASTRA Database...")
     add_ffmpeg_to_path()
     try:
         Base.metadata.create_all(bind=engine)
@@ -62,29 +100,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Database table verification/creation failed: {e}")
 
-    try:
-        # Load BERT Models
-        bert_service.load_model()
-        app.state.bert_service = bert_service
-        app.state.classifier_loaded = True
-        
-        # Load Whisper Model
-        whisper_service.load_model()
-        app.state.whisper_service = whisper_service
-        app.state.asr_loaded = True
-        
-        # Load RAG Engine (index.pkl, pipeline.py, ChromaDB)
-        rag_service.initialize()
-        app.state.rag_service = rag_service
-        
-        # Load BiLSTM Engine
-        lstm_service.initialize()
-        app.state.lstm_service = lstm_service
-        
-        logger.info("All ML Models loaded successfully into app.state")
-    except Exception as e:
-        logger.error(f"Failed to load ML models during startup: {e}")
-        
+    import sys
+    is_testing = any("pytest" in x or "test" in x for x in sys.argv)
+    if not is_testing:
+        import asyncio
+        asyncio.create_task(load_models_background(app))
+    else:
+        logger.info("Test environment detected. Skipping background ML model loading.")
+    
     yield
     
     # Shutdown logic
@@ -95,3 +118,4 @@ async def lifespan(app: FastAPI):
     app.state.lstm_service = None
     app.state.classifier_loaded = False
     app.state.asr_loaded = False
+

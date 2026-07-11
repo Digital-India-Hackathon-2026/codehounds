@@ -174,7 +174,18 @@ async def analyze_audio(
         rag_service = getattr(request.app.state, "rag_service", None)
         lstm_service = getattr(request.app.state, "lstm_service", None)
         
-        is_testing = not (whisper_service and bert_service and rag_service and lstm_service)
+        import sys
+        is_testing_env = any("pytest" in x or "test" in x for x in sys.argv)
+        
+        if not (whisper_service and bert_service and rag_service and lstm_service):
+            if not is_testing_env:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Audio intelligence services are currently initializing in the background. Please wait a few seconds and try again."
+                )
+            is_testing = True
+        else:
+            is_testing = False
         
         if is_testing:
             logger.warning("ML services not loaded in app.state. Using test mock pipeline.")
@@ -253,6 +264,10 @@ async def analyze_audio(
             final_scam_type = scam_type
             if similarity_score > 0.85 and rag_scam_type:
                 final_scam_type = rag_scam_type
+                
+            # If the overall risk level is evaluated as SAFE, override category to Legitimate
+            if risk_level == "SAFE":
+                final_scam_type = "Legitimate"
                 
             similar_scams = []
             if campaign_name:

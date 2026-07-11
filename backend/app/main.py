@@ -63,6 +63,10 @@ def create_app() -> FastAPI:
     # Initialize model-loaded state flags (set to True during lifespan startup)
     app.state.classifier_loaded = False
     app.state.asr_loaded = False
+    app.state.bert_service = None
+    app.state.whisper_service = None
+    app.state.rag_service = None
+    app.state.lstm_service = None
     
     import sys
     import time
